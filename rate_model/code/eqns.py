@@ -9,8 +9,9 @@
 #%%
 from types import SimpleNamespace
 import numpy as np
-import params
+from params import params_dict
 import matplotlib.pyplot as plt
+from scipy import fftpack
 
 def G_E(x,params=params_dict):
     p=SimpleNamespace(**params)
@@ -46,7 +47,7 @@ def i_E_L23_calculator(surround_size,params=params_dict):
     else:
         return p.MIN_i_E_L23+(surround_size-1)*p.m_i_E_L23
 #%%
-def L234_E_PV_SOM_E(params=params_dict):
+def L234_E_PV_SOM_E(params=params_dict,surr_size=1):
     p=SimpleNamespace(**params)
     results_dict={}
     ...
@@ -59,7 +60,7 @@ def L234_E_PV_SOM_E(params=params_dict):
 
     #the following can be modified within a simulation
     i_E_L4=1 # changing the stimulus to the local L4
-    surround_size=1 #changing the size of the stimulus and how many of the surrounding horizontal connections agree?
+    surround_size=surr_size #changing the size of the stimulus and how many of the surrounding horizontal connections agree?
 
     for i in range(0,len(T)-1):
         dr_E_L23 = p.dt/p.tau_E * (-r_E_L23[i] + G_E(params=params_dict,x=(p.W_EE*r_E_L23[i]-p.W_E_I_PV*r_I_PV[i]-p.W_E_I_SOM*r_I_SOM[i]+p.W_EE_L4*i_E_L4+p.W_EE_L23*i_E_L23_calculator(params=params_dict,surround_size=surround_size))))
@@ -84,11 +85,20 @@ def L234_E_PV_SOM_E(params=params_dict):
 
     return results_dict
 
-#p.dt/p.tau_E(-p.r_E+G_E())
-a=L234_E_PV_SOM_E(params=params_dict)
-r_E=a['firing_rates']['r_E_L23']
-r_I_SOM=a['firing_rates']['r_I_SOM']
-r_I_PV=a['firing_rates']['r_I_PV']
-Time_series=a['firing_rates']['Time_series']
 
-plt.plot(r_E,Time_series)
+def FFT(x0,plotting,dt,freq_range:list,title=""): 
+    #freq_range is used for the xlim eg [0,100] means looking at frequencies between 0 and 100 Hz
+    f_s=1000/dt
+    x=x0 - np.nanmean(x0) #nanmean is just the mean of the array
+    X=fftpack.fft(x) # frequency domain magnitude?
+    freqs=fftpack.fftfreq(len(x)) *f_s
+    max_freq=freqs[np.argmax(abs(X))] #frequencies corresponding to the indices corresponding to the highest absolute frequencies
+    max_mag=abs(X[np.argmax(abs(X))]) #abs of maximum magnitude?
+    if plotting:
+        plt.figure()
+        plt.scatter(freqs,np.abs(X))
+        plt.xlabel("Frequency (Hz)")
+        plt.ylabel("Frequency Domain (Spectrum) Magnitude")
+        plt.xlim(freq_range) 
+        plt.title(title)
+    return freqs, X, max_freq, max_mag
