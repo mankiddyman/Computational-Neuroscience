@@ -1,0 +1,12 @@
+#06/06/2023
+
+what if we model how the brain waves change  in response to a changing stimulus instead of being shown a static one since we can freely change i_E_L4
+
+
+I fixed the lack of oscillation in SOM by changing the excitation from the excitatory population but I dont know why the parameters behave the way that they domain
+
+Now I updated the fourier transform with new functions and found a way to make them make sense by restricting the stuff to when the system is stably oscillating
+
+
+increased the time of the simulation
+it seems that the guys are damped oscillating, need to ask bossman how to find out which params can be modified sensibly   

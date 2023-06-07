@@ -11,7 +11,7 @@ from types import SimpleNamespace
 import numpy as np
 from params import params_dict
 import matplotlib.pyplot as plt
-from scipy import fftpack
+from scipy.fft import fft, fftfreq
 
 def G_E(x,params=params_dict):
     p=SimpleNamespace(**params)
@@ -36,7 +36,7 @@ def G_I_PV(x,params=params_dict):
     if x<p.theta_I_PV:
         return 0
     elif p.theta_I_PV<x<p.theta_I_PV+1/p.m_I_PV:
-        return p.m_I_PV*(x-p.theta_I_PV)**3
+        return p.m_I_PV*(x-p.theta_I_PV)** p.exp_I_PV
     elif x>p.theta_I_PV+1/p.m_I_PV:
         return 1
 
@@ -47,7 +47,7 @@ def i_E_L23_calculator(surround_size,params=params_dict):
     else:
         return p.MIN_i_E_L23+(surround_size-1)*p.m_i_E_L23
 #%%
-def L234_E_PV_SOM_E(params=params_dict,surr_size=1):
+def L234_E_PV_SOM_E(params=params_dict,surr_size=1,input_L4=1):
     p=SimpleNamespace(**params)
     results_dict={}
     ...
@@ -59,7 +59,7 @@ def L234_E_PV_SOM_E(params=params_dict,surr_size=1):
     
 
     #the following can be modified within a simulation
-    i_E_L4=1 # changing the stimulus to the local L4
+    i_E_L4=input_L4 # changing the stimulus to the local L4
     surround_size=surr_size #changing the size of the stimulus and how many of the surrounding horizontal connections agree?
 
     for i in range(0,len(T)-1):
@@ -86,6 +86,27 @@ def L234_E_PV_SOM_E(params=params_dict,surr_size=1):
     return results_dict
 
 
+
+def FFT_updated(x0,dt:float,T_end:int,freq_range:list=[0,100],plotting=True,title=""): #using the updated scipy functions
+    f_S=T_end/dt
+    x=x0 - np.nanmean(x0) #nanmean is just the mean of the array
+    power=fft(x)
+    freqs=fftfreq(len(x)) *f_S
+    if plotting:
+        plt.figure()
+        plt.stem(freqs,np.abs(power))
+        plt.xlim(freq_range)
+        plt.xlabel("Frequency (Hz)")
+        plt.ylabel("Frequency Domain (Spectrum) Magnitude")
+        plt.title(title)
+    max_freq=freqs[np.argmax(abs(power))] #most powerful frequency
+    max_mag=abs(power[np.argmax(abs(power))]) #power of the most powerful band
+    return power,freqs
+    
+
+
+
+
 def FFT(x0,plotting,dt,freq_range:list,title=""): 
     #freq_range is used for the xlim eg [0,100] means looking at frequencies between 0 and 100 Hz
     f_s=1000/dt
@@ -102,3 +123,7 @@ def FFT(x0,plotting,dt,freq_range:list,title=""):
         plt.xlim(freq_range) 
         plt.title(title)
     return freqs, X, max_freq, max_mag
+
+
+
+
