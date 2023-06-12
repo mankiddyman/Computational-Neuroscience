@@ -9,7 +9,7 @@
 #%%
 from types import SimpleNamespace
 import numpy as np
-from params import params_dict
+from params import params_dict_original as params_dict
 import matplotlib.pyplot as plt
 from scipy.fft import fft, fftfreq
 
@@ -35,11 +35,12 @@ def G_I_PV(x,params=params_dict):
     p=SimpleNamespace(**params)
     if x<p.theta_I_PV:
         return 0
-    elif p.theta_I_PV<x<p.theta_I_PV+1/p.m_I_PV:
-        return p.m_I_PV*(x-p.theta_I_PV)** p.exp_I_PV
-    elif x>p.theta_I_PV+1/p.m_I_PV:
-        return 1
-
+    else:
+        result=p.m_I_PV*(x-p.theta_I_PV)** p.exp_I_PV
+        if result>1:
+            return 1
+        else:
+            return result
 def i_E_L23_calculator(surround_size,params=params_dict):
     p=SimpleNamespace(**params)
     if surround_size<1:

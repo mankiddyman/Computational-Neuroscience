@@ -9,4 +9,11 @@ Now I updated the fourier transform with new functions and found a way to make t
 
 
 increased the time of the simulation
-it seems that the guys are damped oscillating, need to ask bossman how to find out which params can be modified sensibly   
+it seems that the guys are damped oscillating, need to ask bossman how to find out which params can be modified sensibly
+
+
+I made some mods to make a pfeffer version of the dictionary which doesnt oscillate at all
+the original one does work
+I am gonna quickly write a script to modify the connectivity matrix and make the 2d heatmap of max power and max frequency
+I got the plot working, but for some reason the values aren't changing between experiments; will figure it out
+
