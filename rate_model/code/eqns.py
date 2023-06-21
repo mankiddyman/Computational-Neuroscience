@@ -18,7 +18,7 @@ def G_E(x,params=params_dict):
     if x<p.theta_E:
         return 0
     elif p.theta_E<x<p.theta_E+1/p.m_E:
-        return p.m_E*(x-p.theta_E)
+        return p.m_E*(x-p.theta_E)* p.exp_E
     elif x>p.theta_E+1/p.m_E:
         return 1
 
@@ -27,7 +27,7 @@ def G_I_SOM(x,params=params_dict):
     if x<p.theta_I_SOM:
         return 0
     elif p.theta_I_SOM<x<p.theta_I_SOM+1/p.m_I_SOM:
-        return p.m_I_SOM*(x-p.theta_I_SOM)
+        return p.m_I_SOM*(x-p.theta_I_SOM) ** p.exp_I_SOM
     elif x>p.theta_I_SOM+1/p.m_I_SOM:
         return 1
 

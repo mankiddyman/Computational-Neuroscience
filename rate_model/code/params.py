@@ -14,6 +14,7 @@ params_dict['W_EE_L4']=1 #strangely not mentioned in suplementary table 1
 params_dict['W_EE_L23']=0 #this is a reccurent connection within L2/3
 params_dict['MIN_i_E_L23']= 1.4 #minimum value of input when stim is there?
 params_dict['m_i_E_L23']=0.2 #how fast input increases with surround size
+params_dict['exp_E']=1 #exponent for E_L23
 
 #I_SOM
 params_dict['tau_I_SOM']=10 #ms #they keep them constant for both SOM and PV
@@ -24,7 +25,7 @@ params_dict['W_I_SOM_I_PV']=0
 params_dict['W_I_SOM_I_SOM']=0.025
 params_dict['W_I_SOM_E_L4']=0
 params_dict['W_I_SOM_E_L23']=2
-
+params_dict['exp_I_SOM']=1 #added myself, not in veit et al 2017
 
 #I_PV
 params_dict['tau_I_PV']=10 #ms
@@ -67,3 +68,26 @@ params_dict_pfeffer_2013['W_I_PV_I_PV']=1
 params_dict_pfeffer_2013['W_I_PV_I_SOM']=0.33
 
 #now we have two dictionaries
+
+params_dict_aaryan = params_dict_original.copy() #params with biologically informed weights and all other things kept equal where possible
+
+#first designing the population activation function. theta and m are kept the same for all populations
+params_dict_aaryan['theta_E'], params_dict_aaryan['m_E'] = 10, 0.005
+params_dict_aaryan['theta_I_SOM'], params_dict_aaryan['m_I_SOM'] = 10, 0.005
+params_dict_aaryan['theta_I_PV'], params_dict_aaryan['m_I_PV'] = 10, 0.005
+
+#now the exponent
+params_dict_aaryan['exp_E'], params_dict_aaryan['exp_I_SOM'], params_dict_aaryan['exp_I_PV'] = 3, 3, 3
+
+#now the weights
+params_dict_aaryan['W_EE']=20
+params_dict_aaryan['W_E_I_PV']=20
+params_dict_aaryan['W_E_I_SOM']=20
+
+params_dict_aaryan['W_I_SOM_E']=20
+params_dict_aaryan['W_I_SOM_I_PV']=0.0
+params_dict_aaryan['W_I_SOM_I_SOM']=0.01
+
+params_dict_aaryan['W_I_PV_E']=20
+params_dict_aaryan['W_I_PV_I_PV']=20  
+params_dict_aaryan['W_I_PV_I_SOM']=0.5  

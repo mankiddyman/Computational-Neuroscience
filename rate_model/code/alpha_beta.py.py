@@ -1,5 +1,5 @@
 import numpy as np
-from params import params_dict_original as params_dict
+from params import params_dict_aaryan as params_dict
 import matplotlib.pyplot as plt
 from scipy.fft import fft, fftfreq
 import pandas as pd
@@ -7,6 +7,7 @@ from eqns import *
 from timeit import default_timer as timer
 from datetime import timedelta
 import seaborn as sns
+from visualise import visualise_sim
 #analysing alpha beta
 
 #the point of this script is to visualise PV and SOM's contribution to the maximum frequencies/powers for frequencies seperately
@@ -14,16 +15,13 @@ import seaborn as sns
 #we begin by loading params_dict_original
 
 #setting up initial parameters
-params_dict['W_EE']=1
-params_dict['W_I_PV_E']=1
-params_dict['W_I_SOM_E']=1
-params_dict['W_I_SOM_I_PV']=0
-params_dict['W_I_SOM_I_SOM']=0
+
+print(params_dict)
 alpha=1
-params_dict['W_E_I_PV'],params_dict['W_I_PV_I_PV']=alpha,alpha
+params_dict['W_E_I_PV'],params_dict['W_I_PV_E']=alpha,alpha
 
 beta=1
-params_dict['W_E_I_SOM'],params_dict['W_I_SOM_I_SOM']=beta,beta
+params_dict['W_E_I_SOM'],params_dict['W_I_SOM_E']=beta,beta
 
 #creating a df to store everything
 df=pd.DataFrame({"alpha":[],"beta":[],"max_power":[],"mode_freq":[],"sim_data":[]})
@@ -43,8 +41,8 @@ for i in list(alpha_range):
     for j in list(beta_range):
         beta=j
         #updating alpha and beta
-        params_dict['W_E_I_PV'],params_dict['W_I_PV_I_PV']=alpha,alpha
-        params_dict['W_E_I_SOM'],params_dict['W_I_SOM_I_SOM']=beta,beta
+        params_dict['W_E_I_PV'],params_dict['W_I_PV_E']=alpha,alpha
+        params_dict['W_E_I_SOM'],params_dict['W_I_SOM_E']=beta,beta
         #running the sim        
         a=L234_E_PV_SOM_E(params=params_dict,surr_size=1,input_L4=1)
         progress+=1
@@ -72,9 +70,16 @@ df['alpha']=alpha_list
 df['beta']=beta_list
 df['max_power']=max_power_list
 df['mode_freq']=mode_freq_list
+df['sim_data']=sim_data_list
 
 
+#wicked
+#inspecting 
+alph=40
+bet=30
+visualise_sim(df.query(f"alpha=={alph} and beta=={bet}")['sim_data'].values[0],title=f"alpha={alph},beta={bet}")
 
+#final pivot plot
 fig1,(ax1,ax2)=plt.subplots(1,2,figsize=(10,5),dpi=200,constrained_layout=True)
 
 df.drop_duplicates(['alpha','beta'],inplace=True)
