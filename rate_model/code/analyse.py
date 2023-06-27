@@ -8,9 +8,9 @@ from scipy.fft import fft, fftfreq, rfft, rfft
 import numpy as np
 from matplotlib.backends.backend_pdf import FigureCanvasPdf, PdfPages
 from matplotlib.figure import Figure
-params_dict_orginal['W_I_SOM_E']=10#making this =10? results in oscillations for the SOM population
+params_dict_original['W_I_SOM_E']=10#making this =10? results in oscillations for the SOM population
 
-params_dict=params_dict_orginal.copy()
+params_dict=params_dict_original.copy()
 
 
 params_dict['exp_I_PV']=100

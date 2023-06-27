@@ -79,15 +79,19 @@ params_dict_aaryan['theta_I_PV'], params_dict_aaryan['m_I_PV'] = 10, 0.005
 #now the exponent
 params_dict_aaryan['exp_E'], params_dict_aaryan['exp_I_SOM'], params_dict_aaryan['exp_I_PV'] = 3, 3, 3
 
-#now the weights
-params_dict_aaryan['W_EE']=20
-params_dict_aaryan['W_E_I_PV']=20
-params_dict_aaryan['W_E_I_SOM']=20
 
-params_dict_aaryan['W_I_SOM_E']=20
+alpha=20
+beta=20
+#now the weights
+params_dict_aaryan['W_EE']=50
+params_dict_aaryan['W_E_I_PV']=alpha
+params_dict_aaryan['W_E_I_SOM']=beta
+
+params_dict_aaryan['W_I_PV_E']=alpha
+params_dict_aaryan['W_I_PV_I_PV']=alpha  
+params_dict_aaryan['W_I_PV_I_SOM']=beta/2  
+
+params_dict_aaryan['W_I_SOM_E']=beta
 params_dict_aaryan['W_I_SOM_I_PV']=0.0
 params_dict_aaryan['W_I_SOM_I_SOM']=0.01
 
-params_dict_aaryan['W_I_PV_E']=20
-params_dict_aaryan['W_I_PV_I_PV']=20  
-params_dict_aaryan['W_I_PV_I_SOM']=0.5  
