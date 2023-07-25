@@ -19,7 +19,8 @@ def visualise_sim(sim:dict,title:str=""):
     axs[0,0].plot(Time_series,r_I_PV,label="PV",color='green')
     axs[0,0].set_ylabel("Firing Rate")
     axs[0,0].set_xlabel("Time")
-    axs[0,0].legend(title="Cell Type")
+    #setting legend on the right
+    axs[0,0].legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.,title="Cell Type")
     axs[0,0].set_title(title)
 
     x0=r_E[int(0.3*len(r_E)):]#skipping the first 10% of the data

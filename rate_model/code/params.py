@@ -1,10 +1,13 @@
+import numpy as np
+from types import SimpleNamespace
+import eqns
 #following params (at least at the beginning were taken from here https://www.nature.com/articles/nn.4562#Sec4 suplementary table 1)
 params_dict={}
 params_dict['dt']=0.01
 params_dict['T_end']=1000
 
 #E_L23
-params_dict['tau_E']=20 #ms 
+params_dict['tau_E']=10 #ms 
 params_dict['theta_E']=-11 #threshold input for pop E
 params_dict['m_E']=.25#rate of response for pop_E
 params_dict['W_EE']=16
@@ -95,3 +98,140 @@ params_dict_aaryan['W_I_SOM_E']=beta
 params_dict_aaryan['W_I_SOM_I_PV']=0.0
 params_dict_aaryan['W_I_SOM_I_SOM']=0.01
 
+def default_pars(**kwargs): #default parameters for aaryan's model
+    pars = {}
+    pars['dt']=0.01
+    pars['T_end']=1000
+    
+    pars['MIN_i_E_L23']= 1.4 #minimum value of input when stim is there?
+    pars['m_i_E_L23']=0.2 #how fast input increases with surround size
+
+
+
+    
+    #E_L23
+    pars['tau_E']=10 #ms 
+    pars['theta_E'],pars['m_E']=-10, 0.5 #threshold input and rate of response
+    pars['theta_I_SOM'],pars['m_I_SOM']=10, 0.0005
+    pars['theta_I_PV'],pars['m_I_PV']=10, 0.0005
+
+    
+    pars['tau_I_SOM']=10 #ms keeping identical with exc and pv
+    pars['tau_I_PV']=10 #ms
+    #gain function exponent
+    pars['exp_E'],pars['exp_I_SOM'],pars['exp_I_PV']=3, 3, 3
+
+
+    
+    #now the weights
+    pars['W_EE']=50
+    pars['W_E_I_PV']=alpha
+    pars['W_E_I_SOM']=beta
+    pars['W_EE_L4']=1 #input of a constant stimulus in one receptive field
+    pars['W_EE_L23']=1 #from veit et al 2023
+    
+
+    pars['W_I_PV_E']=alpha
+    pars['W_I_PV_I_PV']=alpha
+    pars['W_I_PV_I_SOM']=beta/2
+    pars['W_I_PV_E_L4']=1
+    pars['W_I_PV_E_L23']=1
+
+
+    pars['W_I_SOM_E']=beta
+    pars['W_I_SOM_I_PV']=0.0
+    pars['W_I_SOM_I_SOM']=0.01
+    pars['W_I_SOM_E_L4']= 1  #https://www.nature.com/articles/s41467-019-12058-z/figures/5
+    pars['W_I_SOM_E_L23']=1
+    #from veit et al 2017
+    #external parameters if any
+    for k in kwargs:
+        pars[k]=kwargs[k]
+
+    return pars
+pars=default_pars()
+
+def Gain_sigmoid(x,params:dict,a=5,theta=0):
+    """
+    Population activation function
+
+    Args:
+        x (float): input to population
+        a (float): gain (default=5) for sharp increase
+        theta (float): threshold (default=0) such that range is {-0.5,+0.5}
+
+    
+    """
+    f = (1 + np.exp(-a * (x - theta)))**-1 - (1 + np.exp(a * theta))**-1
+    return f
+
+def Gain_ReLU(x,params:dict,a=1):
+    """
+    Population activation function
+
+    Args:
+        x (float): input to population
+
+    
+    """
+    f = np.maximum(a*x,0)
+    
+    return f
+    
+def Gain_tanh(x,params:dict,a=5,theta=0):
+    """
+    Population activation function
+
+    Args:
+        x (float): input to population
+        a (float): gain default is 5 for sharp increase (nb this is faster than sigmoid)
+        theta (float): threshold (default=0) such that range is {-1,+1}
+
+    
+    """
+    f = np.tanh(a * (x - theta))
+    return f
+def Gain_exponential_E(x,params:dict):
+    p=SimpleNamespace(**params)
+    if x<=p.theta_E:
+        return 0
+    elif p.theta_E<x<=p.theta_E+1/p.m_E:
+        return p.m_E*(x-p.theta_E)* p.exp_E
+    elif x>p.theta_E+1/p.m_E:
+        return 1
+
+def Gain_exponential_I_SOM(x,params:dict):
+    p=SimpleNamespace(**params)
+    if x<=p.theta_I_SOM:
+        return 0
+    elif p.theta_I_SOM<x<=p.theta_I_SOM+1/p.m_I_SOM:
+        return p.m_I_SOM*(x-p.theta_I_SOM) ** p.exp_I_SOM
+    elif x>p.theta_I_SOM+1/p.m_I_SOM:
+        return 1
+
+def Gain_exponential_I_PV(x,params:dict):
+    p=SimpleNamespace(**params)
+    if x<=p.theta_I_PV:
+        return 0
+    else:
+        result=p.m_I_PV*(x-p.theta_I_PV)** p.exp_I_PV
+        if result>1:
+            return 1
+        else:
+            return result
+
+def Gain_exponential(population, *args): #type in x, then params
+    # try:
+    #     for i in range(len(args)):
+    #         if i==0:
+    #             x=args[i]
+    #         else:
+    #             pars=args[i]
+    
+    
+    if population=="E":
+        return Gain_exponential_E
+    elif population=="I_SOM":
+        return Gain_exponential_I_SOM
+    elif population=="I_PV":
+        return Gain_exponential_I_PV

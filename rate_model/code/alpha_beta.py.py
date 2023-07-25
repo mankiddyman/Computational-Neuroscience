@@ -1,13 +1,15 @@
 import numpy as np
-from params import params_dict_aaryan as params_dict
+#from params import params_dict_aaryan as params_dict
 import matplotlib.pyplot as plt
-from scipy.fft import fft, fftfreq
 import pandas as pd
-from eqns import *
 from timeit import default_timer as timer
 from datetime import timedelta
 import seaborn as sns
 from visualise import visualise_sim
+import scipy.optimize as opt
+import params as prms
+import eqns
+
 #analysing alpha beta
 
 #the point of this script is to visualise PV and SOM's contribution to the maximum frequencies/powers for frequencies seperately
@@ -15,7 +17,8 @@ from visualise import visualise_sim
 
 #setting up initial parameters
 
-print(params_dict)
+params_dict=prms.default_pars()
+#params_dict['tau_E'],params_dict['tau_I_SOM'],params_dict['tau_I_PV']=20,20,20
 alpha=1
 params_dict['W_E_I_PV'],params_dict['W_I_PV_E'],params_dict['W_I_PV_I_PV']=alpha,alpha,alpha
 
@@ -47,7 +50,7 @@ for i in list(alpha_range):
         params_dict['W_E_I_PV'],params_dict['W_I_PV_E'],params_dict['W_I_PV_I_PV']=alpha,alpha,alpha
         params_dict['W_E_I_SOM'],params_dict['W_I_SOM_E'],params_dict['W_I_PV_I_SOM']=beta,beta,beta/2
         #running the sim        
-        a=L234_E_PV_SOM_E(params=params_dict,surr_size=1,input_L4=1)
+        a=eqns.L234_E_PV_SOM_E(gain_func=prms.Gain_exponential,params=params_dict,surr_size=1,input_L4=1)
         progress+=1
         r_E=a['firing_rates']['r_E_L23']
         r_I_SOM=a['firing_rates']['r_I_SOM']
@@ -56,7 +59,7 @@ for i in list(alpha_range):
         #calculating fft for each population
         for i,pop in enumerate([r_E,r_I_PV,r_I_SOM]):
             x0=pop[int(0.1*len(pop)):]#skipping the first 10% of the data
-            power,freqs=FFT_updated(x0=x0,dt=a['params']['dt'],T_end=a['params']['T_end'],title="Exc",plotting=False)
+            power,freqs=eqns.FFT_updated(x0=x0,dt=a['params']['dt'],T_end=a['params']['T_end'],title="Exc",plotting=False)
         
             power=np.abs(power)
             #need to save the maximum frequency and power for each alpha and beta
@@ -87,24 +90,19 @@ df['mode_freq_exc']=mode_freq_exc_list
 df['mode_freq_pv']=mode_freq_pv_list
 df['mode_freq_som']=mode_freq_som_list
 df['sim_data']=sim_data_list
-df['avg_EXC']=df['sim_data'].apply(lambda x: np.mean(x['firing_rates']['r_E_L23'][int(0.1*len(x['firing_rates']['r_E_L23'])):]))
-df['avg_SOM']=df['sim_data'].apply(lambda x: np.mean(x['firing_rates']['r_I_SOM'][int(0.1*len(x['firing_rates']['r_I_SOM'])):]))
-df['avg_PV']=df['sim_data'].apply(lambda x: np.mean(x['firing_rates']['r_I_PV'][int(0.1*len(x['firing_rates']['r_I_PV'])):]))
+df['avg_exc']=df['sim_data'].apply(lambda x: np.mean(x['firing_rates']['r_E_L23'][int(0.1*len(x['firing_rates']['r_E_L23'])):]))
+df['avg_som']=df['sim_data'].apply(lambda x: np.mean(x['firing_rates']['r_I_SOM'][int(0.1*len(x['firing_rates']['r_I_SOM'])):]))
+df['avg_pv']=df['sim_data'].apply(lambda x: np.mean(x['firing_rates']['r_I_PV'][int(0.1*len(x['firing_rates']['r_I_PV'])):]))
 df.to_csv("../results/alpha_beta.tsv",sep="\t",encoding="utf-8")
 #df=pd.read_csv("../results/alpha_beta.csv")
 
-#wicked
-#inspecting 
-alph=40
-bet=30
-visualise_sim(df.query(f"alpha=={alph} and beta=={bet}")['sim_data'].values[0],title=f"alpha={alph},beta={bet}")
 
 #final pivot plot
-#%%
+
 from matplotlib.colors import LogNorm
 from matplotlib.ticker import MaxNLocator
-
-fig1,axs =plt.subplots(3,2,figsize=(10,10),dpi=200,constrained_layout=True)
+#%%
+fig1,axs =plt.subplots(3,3,figsize=(10,10),dpi=1000,constrained_layout=True)
 
 df.drop_duplicates(['alpha','beta'],inplace=True)
 
@@ -112,19 +110,30 @@ df.drop_duplicates(['alpha','beta'],inplace=True)
 for i,pop in enumerate(["exc","pv","som"]):
 
     pivot=df.pivot(index='alpha',columns='beta',values=f'mode_freq_{pop}')
-    sns.heatmap(pivot,annot=True,ax=axs[i,0])
+    sns.heatmap(pivot,annot=False,ax=axs[i,0],annot_kws={"fontsize":8},vmin=0,vmax=100)
     axs[i,0].invert_yaxis()
     axs[i,0].set_title(f"Mode_Freq_{pop}")
     axs[i,0].set_xlabel("Beta (SOM)")
     axs[i,0].set_ylabel("Alpha (PV)")
 
     pivot=df.pivot(index='alpha',columns='beta',values=f'max_power_{pop}')
-    sns.heatmap(pivot,annot=True,ax=axs[i,1])
+    sns.heatmap(pivot,annot=False,ax=axs[i,1],annot_kws={"fontsize":8})
     axs[i,1].invert_yaxis()
     axs[i,1].set_title(f"max_power_{pop}")
     axs[i,1].set_xlabel("Beta (SOM)")
     axs[i,1].set_ylabel("Alpha (PV)")
 
+
+    pivot=df.pivot(index='alpha',columns='beta',values=f'avg_{pop}')
+    sns.heatmap(pivot,annot=False,ax=axs[i,2],annot_kws={"fontsize":8},vmin=0,vmax=2)
+    axs[i,2].invert_yaxis()
+    axs[i,2].set_title(f"avg_{pop}")
+    axs[i,2].set_xlabel("Beta (SOM)")
+    axs[i,2].set_ylabel("Alpha (PV)")
+
+
+#saving to file
+fig1.savefig("../results/heatmap_general.png",dpi=750)
 #%%
 #visualise no PV and no SOM
 alph=0
@@ -159,17 +168,17 @@ beta_legend=[mlines.Line2D([],[],color='black',marker='o',linestyle='None',marke
 ax1.set_xlabel("Alpha (PV)")
 ax1.set_ylabel("Average firing rate")
 for i,num in enumerate(df['beta'].unique()):
-    ax1.plot(df.query(f"beta=={num}")['alpha'],df.query(f"beta=={num}")['avg_EXC'],color='blue',marker='o',markersize=i,linestyle=':')
-    ax1.plot(df.query(f"beta=={num}")['alpha'],df.query(f"beta=={num}")['avg_SOM'],color='red',marker='o',markersize=i,linestyle=':')
-    ax1.plot(df.query(f"beta=={num}")['alpha'],df.query(f"beta=={num}")['avg_PV'],color='green',marker='o',markersize=i,linestyle=':')
+    ax1.plot(df.query(f"beta=={num}")['alpha'],df.query(f"beta=={num}")['avg_exc'],color='blue',marker='o',markersize=i,linestyle=':')
+    ax1.plot(df.query(f"beta=={num}")['alpha'],df.query(f"beta=={num}")['avg_som'],color='red',marker='o',markersize=i,linestyle=':')
+    ax1.plot(df.query(f"beta=={num}")['alpha'],df.query(f"beta=={num}")['avg_pv'],color='green',marker='o',markersize=i,linestyle=':')
 ax1.legend(handles=[exc,som,pv,*beta_legend],loc='upper left',bbox_to_anchor=(1,1))
 
 ax2.set_xlabel("Beta (SOM)")
 ax2.set_ylabel("Average firing rate")
 for i,num in enumerate(df['alpha'].unique()):
-    ax2.plot(df.query(f"alpha=={num}")['beta'],df.query(f"alpha=={num}")['avg_EXC'],color='blue',marker='o',markersize=i,linestyle=':')
-    ax2.plot(df.query(f"alpha=={num}")['beta'],df.query(f"alpha=={num}")['avg_SOM'],color='red',marker='o',markersize=i,linestyle=':')
-    ax2.plot(df.query(f"alpha=={num}")['beta'],df.query(f"alpha=={num}")['avg_PV'],color='green',marker='o',markersize=i,linestyle=':')
+    ax2.plot(df.query(f"alpha=={num}")['beta'],df.query(f"alpha=={num}")['avg_exc'],color='blue',marker='o',markersize=i,linestyle=':')
+    ax2.plot(df.query(f"alpha=={num}")['beta'],df.query(f"alpha=={num}")['avg_som'],color='red',marker='o',markersize=i,linestyle=':')
+    ax2.plot(df.query(f"alpha=={num}")['beta'],df.query(f"alpha=={num}")['avg_pv'],color='green',marker='o',markersize=i,linestyle=':')
 ax2.legend(handles=[exc,som,pv,*alpha_legend],loc='upper left',bbox_to_anchor=(1,1))
 
 
@@ -192,4 +201,33 @@ bet=20
 visualise_sim(df.query(f"alpha=={alph} and beta=={bet}")['sim_data'].values[0],title=f"alpha={alph},beta={bet} \n High PV and low SOM")
 
 
+alph=80
+bet=20
+visualise_sim(df.query(f"alpha=={alph} and beta=={bet}")['sim_data'].values[0],title=f"alpha={alph},beta={bet} \n Higher PV and low SOM \n (SOM fixation over inhibiting PV and constant EXC)")
+
+alph=10
+bet=80
+visualise_sim(df.query(f"alpha=={alph} and beta=={bet}")['sim_data'].values[0],title=f"alpha={alph},beta={bet} \n Higher PV and low SOM \n (SOM fixation over inhibiting PV and constant EXC)")
+
+# %%
+#heatmap of avg firing rate 
+
+#to do
+# make a 9 panel plot of alpha beta and samples
+#need to select which samples to use for this
+
+
+#make a 9 panel heatmap of rate, freq and power across cell population explained by alpha beta
+
+#idenitfy a good measure of the transition to oscillations that is a function of freq, power and rate 
+
+#can then change the activation function and identify effects on oscillation transition
+
+# angle this toward E-I balance by adding up the firing rates of the inhibitory populations and comparing to the excitatory populations
+
+#finish making contribution plot
+
+#examine changes due to different activation function
+#relu
+#
 # %%
