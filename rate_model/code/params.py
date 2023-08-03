@@ -1,6 +1,5 @@
 import numpy as np
 from types import SimpleNamespace
-import eqns
 #following params (at least at the beginning were taken from here https://www.nature.com/articles/nn.4562#Sec4 suplementary table 1)
 params_dict={}
 params_dict['dt']=0.01
@@ -196,7 +195,7 @@ def Gain_exponential_E(x,params:dict):
     if x<=p.theta_E:
         return 0
     elif p.theta_E<x<=p.theta_E+1/p.m_E:
-        return p.m_E*(x-p.theta_E)* p.exp_E
+        return p.m_E*(x-p.theta_E)**p.exp_E
     elif x>p.theta_E+1/p.m_E:
         return 1
 

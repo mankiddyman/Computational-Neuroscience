@@ -23,7 +23,7 @@ def visualise_sim(sim:dict,title:str=""):
     axs[0,0].legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.,title="Cell Type")
     axs[0,0].set_title(title)
 
-    x0=r_E[int(0.3*len(r_E)):]#skipping the first 10% of the data
+    x0=r_E[int(0.3*len(r_E)):]#skipping the first 30% of the data
     power_exc,freqs_exc=FFT_updated(x0=x0,dt=sim['params']['dt'],T_end=sim['params']['T_end'],title="Exc",plotting=False)
    
     x0=r_I_PV[int(0.3*len(r_I_PV)):]#skipping the first 10% of the data

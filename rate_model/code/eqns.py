@@ -15,6 +15,63 @@ import matplotlib.pyplot as plt
 from scipy.fft import fft, fftfreq
 import params as prms
 from typing import Callable
+from scipy.integrate import trapezoid,cumulative_trapezoid
+import peakutils
+
+
+def FFT_updated(x0,dt:float,T_end:int,freq_range:list=[0,100],plotting=True,title=""): #using the updated scipy functions
+    f_S=T_end/dt
+    x=x0 - np.nanmean(x0) #nanmean is just the mean of the array
+    power=fft(x)
+    freqs=fftfreq(len(x)) *f_S
+    if plotting:
+        plt.figure()
+        plt.stem(freqs,np.abs(power))
+        plt.xlim(freq_range)
+        plt.xlabel("Frequency (Hz)")
+        plt.ylabel("Frequency Domain (Spectrum) Magnitude")
+        plt.title(title)
+    max_freq=freqs[np.argmax(abs(power))] #most powerful frequency
+    max_mag=abs(power[np.argmax(abs(power))]) #power of the most powerful band
+    return power,freqs
+        
+def calculate_properties(sim:dict):
+    r_E=sim['firing_rates']['r_E_L23']
+    r_I_SOM=sim['firing_rates']['r_I_SOM']
+    r_I_PV=sim['firing_rates']['r_I_PV']
+
+    sim['properties']={}
+
+    names=['Exc','PV','SOM']
+    for i,pop in enumerate([r_E,r_I_PV,r_I_SOM]):
+        x0=pop[int(0.3*len(pop)):]#skipping the first 30% of the data
+
+        power,freqs=FFT_updated(x0=x0,dt=sim['params']['dt'],T_end=sim['params']['T_end'],title="",plotting=False)
+        power=np.abs(power[0:100]) #restricting to 0-100Hz
+        freqs=freqs[0:100]
+
+        total_power=trapezoid(y=power,x=freqs)
+        max_power=max(power)
+        try:
+            mode_freq=int(np.where(power==max(power))[0])
+        except:
+            mode_freq=0
+
+        indexes=peakutils.indexes(power,thres=0.1,min_dist=10)
+        n_peaks=len(indexes)
+        try:
+            mean_freq=np.mean(freqs[indexes])
+        except:
+            mean_freq=0
+        avg_firing_rate=np.mean(pop)
+
+
+
+        
+        sim['properties'][f"{names[i]}"]={'total_power':total_power,'max_power':max_power,'mode_freq':mode_freq,'n_peaks':n_peaks,'mean_freq':mean_freq,'avg_firing_rate':avg_firing_rate,'power':power,'freqs':freqs}
+
+    return sim
+
 
 
 def i_E_L23_calculator(surround_size,params:dict):
@@ -75,25 +132,14 @@ def L234_E_PV_SOM_E(gain_func:Callable,params:dict,input_L4:float,surr_size=1):
     results_dict['params']=params
     results_dict['firing_rates']={'r_E_L23':r_E_L23,'r_I_SOM':r_I_SOM,'r_I_PV':r_I_PV,'Time_series':T,'dC_SOM':(dr_I_SOM/dr_I_SOM+dr_I_PV),'C_SOM':r_I_SOM/r_I_SOM+r_I_PV,'dC_PV':(dr_I_PV/dr_I_SOM+dr_I_PV),'C_PV':r_I_PV/r_I_SOM+r_I_PV,'dC_E':dr_E_L23,'C_E':r_E_L23}
 
+
+    results_dict=calculate_properties(sim=results_dict)
+
     return results_dict
 
 
 
-def FFT_updated(x0,dt:float,T_end:int,freq_range:list=[0,100],plotting=True,title=""): #using the updated scipy functions
-    f_S=T_end/dt
-    x=x0 - np.nanmean(x0) #nanmean is just the mean of the array
-    power=fft(x)
-    freqs=fftfreq(len(x)) *f_S
-    if plotting:
-        plt.figure()
-        plt.stem(freqs,np.abs(power))
-        plt.xlim(freq_range)
-        plt.xlabel("Frequency (Hz)")
-        plt.ylabel("Frequency Domain (Spectrum) Magnitude")
-        plt.title(title)
-    max_freq=freqs[np.argmax(abs(power))] #most powerful frequency
-    max_mag=abs(power[np.argmax(abs(power))]) #power of the most powerful band
-    return power,freqs
+
     
 
 
