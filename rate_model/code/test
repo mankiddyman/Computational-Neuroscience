@@ -1,0 +1,18 @@
+import warnings
+i=1
+warnings.filterwarnings("ignore")
+import eqns
+import params as prms
+from scipy.integrate import trapz
+sim=eqns.L234_E_PV_SOM_E(gain_func=prms.Gain_veit,params=prms.default_pars(),input_L4=1,surr_size=i,connectivity_matrix=prms.connectivity['veit'])
+visualise_sim(sim)
+r_E=sim["firing_rates"]["r_E_L23"]
+x0=r_E[int(0.3*len(r_E)):]
+power_E,freqs_E=eqns.FFT_updated(x0=x0,dt=sim['params']['dt'],T_end=sim['params']['T_end'],title="",plotting=False)
+#retain only 0-100Hz
+power_E=np.abs(power_E[0:100])
+freqs_E=freqs_E[0:100]
+total_power=integrate.trapz(y=power_E,x=freqs_E)
+#Gamma power was reported as the peak power at the center frequency of the narrowband peak in the PSD in the 20–30 Hz range.
+gamma_power=integrate.trapz(y=power_E[np.where((freqs_E>20) & (freqs_E<30))],x=freqs_E[np.where((freqs_E>20) & (freqs_E<30))])
+print(f"surr={i}",f"total_power={total_power}",f"gamma_power={gamma_power}",f"gamma_prop={gamma_power/total_power}")

@@ -37,8 +37,10 @@ def calculate_properties(sim:dict):
         mean_freq=np.mean(freqs[indexes])
         avg_firing_rate=np.mean(pop)
 
-        sim['properties'][f"{names[i]}"]={'total_power':total_power,'max_power':max_power,'mode_freq':mode_freq,'n_peaks':n_peaks,'mean_freq':mean_freq,'avg_firing_rate':avg_firing_rate,'power':power,'freqs':freqs}
-
+        sim['properties'][f"{names[i]}"]={'total_power':total_power,'max_power':max_power,'mode_freq':mode_freq,        'n_peaks':n_peaks,
+        'mean_freq':mean_freq,'avg_firing_rate':avg_firing_rate,'power':power,'freqs':freqs,
+        "peak_freqs":freqs[indexes]}
+         
     return sim
 
 index=28
